@@ -45,13 +45,16 @@ with st.expander("View Generated Flashcards", expanded=True):
 
 # --- QUIZ ---
 st.subheader("🎲 Quick Quiz")
+
 st.markdown("**Q1:** Which gas do plants absorb for photosynthesis?")
 quiz_answer = st.radio("Choose your answer:", ["Oxygen", "Carbon Dioxide", "Nitrogen"], index=None)
+
 if st.button("Check Answer"):
     if quiz_answer == "Carbon Dioxide":
         st.success("✅ Correct! Plants absorb CO₂.")
     else:
         st.error("❌ Incorrect. The correct answer is Carbon Dioxide.")
+
 
 # --- FOOTER ---
 st.markdown("---")
