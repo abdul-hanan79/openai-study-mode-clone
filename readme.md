@@ -78,7 +78,7 @@ Now open the link (usually `http://localhost:8501`) in your browser. 🎉
 
 ---
 
-## 🙏 Special Thanks
+## Note
 
 This project was developed as part of **Certified Agentic & Robotic AI Engineer** program under **PIAIC**.
 
