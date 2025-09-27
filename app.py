@@ -31,6 +31,28 @@ st.markdown(
     "🎓 Study & Learn Assistant</h1>",
     unsafe_allow_html=True
 )
+# Animated developer credit
+st.markdown("""
+<style>
+.dev-credit {
+  font-size:20px;
+  color:#00ffae;
+  text-align:center;
+  margin:20px auto;
+  font-weight: bold;
+  animation: glow 2.5s ease-in-out infinite;
+}
+
+/* Neon glow animation */
+@keyframes glow {
+  0%,100% { text-shadow: 0 0 0px #00ffae; }
+  50%     { text-shadow: 0 0 15px #00ffae, 0 0 30px #00ffae; }
+}
+</style>
+
+<p class="dev-credit">✨ Developed by Abdul Hanan ✨</p>
+""", unsafe_allow_html=True)
+
 st.markdown("<p style='text-align:center; font-size:18px;'>Learn interactively with AI tutor, flashcards, and quizzes 🚀</p>", unsafe_allow_html=True)
 
 # ---- CHAT SECTION ----
@@ -67,11 +89,17 @@ with c4:
     clear_qz = st.button("🗑️ Clear Quiz", use_container_width=True, disabled=not st.session_state.quiz)
 
 # ---- FLASHCARDS ----
+# ---- FLASHCARDS ----
 if gen_fc:
     with st.spinner("Creating flashcards..."):
-        last_answer = next((m["content"] for m in reversed(st.session_state.history) if m["role"] == "assistant"), "")
+        last_answer = next(
+            (m["content"] for m in reversed(st.session_state.history) if m["role"] == "assistant"),
+            ""
+        )
         st.session_state.flashcards = make_flashcards(last_answer)
-    st.session_state.flashcards_created += len(st.session_state.flashcards)
+
+    # update flashcard counter correctly
+    st.session_state.flashcards_created = len(st.session_state.flashcards)
 
 if clear_fc:
     st.session_state.flashcards = []
@@ -79,6 +107,7 @@ if clear_fc:
 
 if st.session_state.flashcards:
     render_flashcards(st.session_state.flashcards)
+
 
 # ---- QUIZ ----
 if gen_qz:
