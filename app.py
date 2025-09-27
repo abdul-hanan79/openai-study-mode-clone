@@ -1,61 +1,93 @@
 import streamlit as st
+from utils.ai_tools import ask_tutor, make_flashcards, make_quiz
+from components.flashcards import render_flashcards
+from components.quizzes import render_quiz
 
-# --- PAGE CONFIG ---
-st.set_page_config(
-    page_title="Study & Learn Clone",
-    page_icon="📚",
-    layout="wide"
-)
+# ---- PAGE CONFIG ----
+st.set_page_config(page_title="Study & Learn Pro", page_icon="🎓", layout="wide")
 
-# --- SIDEBAR ---
+# ---- SESSION STATE ----
+if "history" not in st.session_state: st.session_state.history = []
+if "flashcards" not in st.session_state: st.session_state.flashcards = []
+if "quiz" not in st.session_state: st.session_state.quiz = None
+if "has_ai_answer" not in st.session_state: st.session_state.has_ai_answer = False
+if "flashcards_created" not in st.session_state: st.session_state.flashcards_created = 0
+if "quizzes_taken" not in st.session_state: st.session_state.quizzes_taken = 0
+
+# ---- SIDEBAR ----
 with st.sidebar:
-    st.title("📚 Study Mode")
-    st.markdown("### Progress Tracker")
-    st.metric("Topics Studied", 5)
-    st.metric("Flashcards Created", 12)
-    st.metric("Quizzes Taken", 3)
-
+    st.image("https://img.icons8.com/color/96/000000/graduation-cap.png", width=80)
+    st.title("📚 Study Dashboard")
+    st.metric("Topics Studied", len([m for m in st.session_state.history if m["role"] == "assistant"]))
+    st.metric("Flashcards Created", st.session_state.flashcards_created)
+    st.metric("Quizzes Taken", st.session_state.quizzes_taken)
     st.markdown("---")
-    st.subheader("⚙️ Settings")
     style = st.radio("Explanation Style:", ["Concise", "Detailed", "Analogy"])
 
-# --- MAIN CONTENT ---
-st.title("🎓 Study & Learn Assistant")
-st.caption("Your AI-powered tutor for explanations, flashcards, and quizzes.")
+# ---- HEADER ----
+st.markdown(
+    "<h1 style='text-align:center; font-size:40px; background: -webkit-linear-gradient(#00ffae, #2563eb);"
+    "-webkit-background-clip: text; -webkit-text-fill-color: transparent;'>"
+    "🎓 Study & Learn Assistant</h1>",
+    unsafe_allow_html=True
+)
+st.markdown("<p style='text-align:center; font-size:18px;'>Learn interactively with AI tutor, flashcards, and quizzes 🚀</p>", unsafe_allow_html=True)
 
-# --- CHAT SECTION ---
-st.subheader("💬 Ask your tutor")
-if "history" not in st.session_state:
-    st.session_state.history = []
+# ---- CHAT SECTION ----
+st.subheader("💬 Chat with your AI Tutor")
+user_input = st.chat_input("Ask me any topic to learn...")
 
-user_input = st.chat_input("Type your question here...")
 if user_input:
-    st.session_state.history.append({"role": "user", "content": user_input})
-    # (placeholder AI response)
-    st.session_state.history.append({"role": "assistant", "content": "This is a sample explanation with key points and a quiz."})
+    st.session_state.history.append({"role":"user", "content": user_input})
+    with st.chat_message("user"):
+        st.write(user_input)
 
-for msg in st.session_state.history:
-    st.chat_message(msg["role"]).write(msg["content"])
+    with st.chat_message("assistant"):
+        with st.spinner("🤔 Thinking..."):
+            answer = ask_tutor(user_input, style)
+        st.write(answer)
 
-# --- FLASHCARDS ---
-st.subheader("📝 Flashcards")
-with st.expander("View Generated Flashcards", expanded=True):
-    st.markdown("**Q:** What is photosynthesis?\n\n**A:** The process by which plants make food using sunlight.")
-    st.markdown("**Q:** What is the chemical formula for water?\n\n**A:** H₂O")
+    st.session_state.history.append({"role":"assistant", "content": answer})
+    st.session_state.has_ai_answer = True
 
-# --- QUIZ ---
-st.subheader("🎲 Quick Quiz")
+# replay chat history
+for msg in st.session_state.history[:-2] if user_input else st.session_state.history:
+    role_class = "user-msg" if msg["role"] == "user" else "ai-msg"
+    st.markdown(f"<div class='{role_class}'>{msg['content']}</div>", unsafe_allow_html=True)
 
-st.markdown("**Q1:** Which gas do plants absorb for photosynthesis?")
-quiz_answer = st.radio("Choose your answer:", ["Oxygen", "Carbon Dioxide", "Nitrogen"], index=None)
+# ---- ACTION BUTTONS ----
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    gen_fc = st.button("📝 Generate Flashcards", use_container_width=True, disabled=not st.session_state.has_ai_answer)
+with c2:
+    gen_qz = st.button("🎲 Generate Quiz", use_container_width=True, disabled=not st.session_state.has_ai_answer)
+with c3:
+    clear_fc = st.button("🗑️ Clear Flashcards", use_container_width=True, disabled=not st.session_state.flashcards)
+with c4:
+    clear_qz = st.button("🗑️ Clear Quiz", use_container_width=True, disabled=not st.session_state.quiz)
 
-if st.button("Check Answer"):
-    if quiz_answer == "Carbon Dioxide":
-        st.success("✅ Correct! Plants absorb CO₂.")
-    else:
-        st.error("❌ Incorrect. The correct answer is Carbon Dioxide.")
+# ---- FLASHCARDS ----
+if gen_fc:
+    with st.spinner("Creating flashcards..."):
+        last_answer = next((m["content"] for m in reversed(st.session_state.history) if m["role"] == "assistant"), "")
+        st.session_state.flashcards = make_flashcards(last_answer)
+    st.session_state.flashcards_created += len(st.session_state.flashcards)
 
+if clear_fc:
+    st.session_state.flashcards = []
+    st.session_state.flashcards_created = 0
 
-# --- FOOTER ---
-st.markdown("---")
-st.caption("Made with ❤️ by Abdul Hanan Software Engineer")
+if st.session_state.flashcards:
+    render_flashcards(st.session_state.flashcards)
+
+# ---- QUIZ ----
+if gen_qz:
+    with st.spinner("Building quiz..."):
+        last_answer = next((m["content"] for m in reversed(st.session_state.history) if m["role"] == "assistant"), "")
+        st.session_state.quiz = make_quiz(last_answer)
+
+if clear_qz:
+    st.session_state.quiz = None
+
+if st.session_state.quiz:
+    render_quiz(st.session_state.quiz)
