@@ -31,7 +31,7 @@ Built with **Streamlit + OpenAI + Python**, as part of my **Certified Agentic & 
 
 ```bash
 # clone the repo
-git clone <your-repo-url>
+git clone <your-repo-link>
 cd study-mode-clone
 
 # create and activate virtual environment (Windows example)
