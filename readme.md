@@ -28,7 +28,6 @@ Built with **Streamlit + OpenAI + Python**, as part of my **Certified Agentic & 
 ## 🚀 How to Run the Project
 
 ### 1️⃣ Clone the repo & open virtual environment
-
 ```bash
 # clone the repo
 git clone <your-repo-link>
